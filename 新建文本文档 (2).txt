@@ -1,0 +1,202 @@
+import network
+import ntptime
+import time
+import machine
+import ssd1306
+from framebuf import FrameBuffer as FB
+import dhtx
+import neopixel
+
+i2c = machine.I2C(scl = machine.Pin(22), sda = machine.Pin(21), freq = 4000000)
+oled = ssd1306.SSD1306_I2C(128, 64, i2c)
+i2c = machine.I2C(scl = machine.Pin(22), sda = machine.Pin(21), freq = 400000)
+oled = ssd1306.SSD1306_I2C(128, 64, i2c)
+oled.fill(0)
+rgb = neopixel.NeoPixel(machine.Pin(4), 12, timing = True)
+获='0x08,0x20,0x08,0x20,0xFF,0xFE,0x08,0x20,0x44,0x40,0x28,0x50,0x10,0x48,0x28,0x40, 0x4F,0xFE,0x98,0x40,0x28,0xA0,0x48,0xA0,0x89,0x10,0x09,0x10,0x52,0x08,0x24,0x06'.replace(" ", "")
+获= FB(bytearray([int('0x'+获[i+2:i+4]) for i in range(0,len(获),5)]), 16, 16, 3)
+取='0x00,0x00,0xFF,0x80,0x22,0xFC,0x22,0x44,0x3E,0x44,0x22,0x44,0x22,0x44,0x3E,0x44, 0x22,0x28,0x22,0x28,0x27,0xA8,0xFA,0x10,0x42,0x10,0x02,0x28,0x02,0x44,0x02,0x82'.replace(" ", "")
+取= FB(bytearray([int('0x'+取[i+2:i+4]) for i in range(0,len(取),5)]), 16, 16, 3)
+时='0x00,0x08,0x00,0x08,0x7C,0x08,0x44,0x08,0x45,0xFE,0x44,0x08,0x44,0x08,0x7C,0x08, 0x44,0x88,0x44,0x48,0x44,0x48,0x44,0x08,0x7C,0x08,0x44,0x08,0x00,0x28,0x00,0x10'.replace(" ", "")
+时= FB(bytearray([int('0x'+时[i+2:i+4]) for i in range(0,len(时),5)]), 16, 16, 3)
+间='0x20,0x00,0x13,0xFC,0x10,0x04,0x40,0x04,0x47,0xC4,0x44,0x44,0x44,0x44,0x44,0x44, 0x47,0xC4,0x44,0x44,0x44,0x44,0x44,0x44,0x47,0xC4,0x40,0x04,0x40,0x14,0x40,0x08'.replace(" ", "")
+间= FB(bytearray([int('0x'+间[i+2:i+4]) for i in range(0,len(间),5)]), 16, 16, 3)
+中='0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x3F,0xF8,0x21,0x08,0x21,0x08,0x21,0x08, 0x21,0x08,0x21,0x08,0x3F,0xF8,0x21,0x08,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00'.replace(" ", "")
+中= FB(bytearray([int('0x'+中[i+2:i+4]) for i in range(0,len(中),5)]), 16, 16, 3)
+省略号='0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x60,0x60,0x00,0x00'.replace(" ", "")
+省略号= FB(bytearray([int('0x'+省略号[i+2:i+4]) for i in range(0,len(省略号),5)]), 8, 16, 3)
+失='0x01,0x00,0x11,0x00,0x11,0x00,0x11,0x00,0x3F,0xF8,0x21,0x00,0x41,0x00,0x01,0x00, 0xFF,0xFE,0x02,0x80,0x04,0x40,0x04,0x40,0x08,0x20,0x10,0x10,0x20,0x08,0xC0,0x06'.replace(" ", "")
+失= FB(bytearray([int('0x'+失[i+2:i+4]) for i in range(0,len(失),5)]), 16, 16, 3)
+败='0x00,0x40,0x7C,0x40,0x44,0x40,0x54,0x80,0x54,0xFE,0x55,0x08,0x56,0x88,0x54,0x88, 0x54,0x88,0x54,0x50,0x54,0x50,0x10,0x20,0x28,0x50,0x24,0x88,0x45,0x04,0x82,0x02'.replace(" ", "")
+败= FB(bytearray([int('0x'+败[i+2:i+4]) for i in range(0,len(败),5)]), 16, 16, 3)
+温='0x00,0x00,0x23,0xF8,0x12,0x08,0x12,0x08,0x83,0xF8,0x42,0x08,0x42,0x08,0x13,0xF8, 0x10,0x00,0x27,0xFC,0xE4,0xA4,0x24,0xA4,0x24,0xA4,0x24,0xA4,0x2F,0xFE,0x00,0x00'.replace(" ", "")
+温= FB(bytearray([int('0x'+温[i+2:i+4]) for i in range(0,len(温),5)]), 16, 16, 3)
+度='0x01,0x00,0x00,0x80,0x3F,0xFE,0x22,0x20,0x22,0x20,0x3F,0xFC,0x22,0x20,0x22,0x20, 0x23,0xE0,0x20,0x00,0x2F,0xF0,0x24,0x10,0x42,0x20,0x41,0xC0,0x86,0x30,0x38,0x0E'.replace(" ", "")
+度= FB(bytearray([int('0x'+度[i+2:i+4]) for i in range(0,len(度),5)]), 16, 16, 3)
+湿='0x00,0x00,0x27,0xF8,0x14,0x08,0x14,0x08,0x87,0xF8,0x44,0x08,0x44,0x08,0x17,0xF8, 0x11,0x20,0x21,0x20,0xE9,0x24,0x25,0x28,0x23,0x30,0x21,0x20,0x2F,0xFE,0x00,0x00'.replace(" ", "")
+湿= FB(bytearray([int('0x'+湿[i+2:i+4]) for i in range(0,len(湿),5)]), 16, 16, 3)
+
+def setup_wifi(ssid, password):
+    """设置并连接WiFi"""
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    
+    if not wlan.isconnected():
+        print("连接到WiFi: {}".format(ssid))
+        wlan.connect(ssid, password)
+        
+        # 等待连接
+        for _ in range(15):
+            if wlan.isconnected():
+                print("WiFi连接成功!")
+                print("IP地址:", wlan.ifconfig()[0])
+                return True
+            time.sleep(1)
+        print("WiFi连接失败!")
+        return False
+    return True
+
+def set_beijing_time():
+    """设置设备时间为北京时间（UTC+8）"""
+    try:
+        # 先获取UTC时间
+        ntptime.settime()
+        
+        # 获取当前UTC时间戳（自1970年1月1日以来的秒数）
+        utc_timestamp = time.time()
+        
+        # 添加8小时（28800秒）得到北京时间
+        beijing_timestamp = utc_timestamp + (8 * 3600)
+        
+        # 设置设备时间为北京时间
+        rtc = machine.RTC()
+        # 将时间戳转换为时间元组
+        beijing_time = time.localtime(beijing_timestamp)
+        # 设置RTC：年、月、日、星期、时、分、秒、毫秒
+        # 注意：星期几需要从0-6转换为1-7（1=星期一，7=星期日）
+        weekday = beijing_time[6] + 1  # 原值0-6对应周一到周日，转换为1-7
+        rtc.datetime((
+            beijing_time[0], beijing_time[1], beijing_time[2], weekday,
+            beijing_time[3], beijing_time[4], beijing_time[5], 0
+        ))
+        
+        # 获取并格式化当前北京时间
+        t = time.localtime()
+        formatted_time = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(
+            t[0], t[1], t[2], t[3], t[4], t[5])
+        
+        print("时间同步成功! 北京时间:", formatted_time)
+        return True
+        
+    except Exception as e:
+        print("时间设置失败:", e)
+        return False
+
+def get_ntp_time(max_retries=3):
+    """通过NTP获取时间，带重试机制，并设置为北京时间"""
+    # 使用可靠的NTP服务器IP地址（避免DNS解析问题）
+    ntp_servers = [
+        "132.163.97.4",    # NIST, USA
+        "129.6.15.30",     # NIST, USA
+        "216.239.35.0",    # Google, USA
+        "162.159.200.123", # Cloudflare, Global
+        "203.107.6.88"     # Alibaba, China
+    ]
+    
+    # 保存原始NTP主机设置
+    original_host = ntptime.host if hasattr(ntptime, 'host') else None
+    
+    for attempt in range(max_retries):
+        try:
+            # 尝试不同的NTP服务器
+            server = ntp_servers[attempt % len(ntp_servers)]
+            print("尝试从 {} 获取时间 (尝试 {}/{})".format(server, attempt+1, max_retries))
+            
+            # 设置NTP服务器
+            ntptime.host = server
+            
+            # 获取并设置北京时间
+            if set_beijing_time():
+                return True
+            
+        except OSError as e:
+            print("错误: {} (代码: {})".format(e, e.args[0]))
+            # 常见的错误代码处理建议
+            if e.args[0] == -202:
+                print("错误 -202: 网络问题，请检查连接")
+            elif e.args[0] == 110:  # ETIMEDOUT
+                print("错误 110: 连接超时，尝试下一个服务器")
+            time.sleep(2)  # 重试前等待
+            
+        except Exception as e:
+            print("未知错误:", e)
+            time.sleep(2)
+    
+    # 恢复原始NTP主机设置
+    if original_host:
+        ntptime.host = original_host
+    
+    print("NTP时间获取失败，所有尝试均未成功")
+    return False
+
+# WiFi配置
+WIFI_SSID = "djs2.4"
+WIFI_PASSWORD = "11111111"
+
+# 主程序
+# 先连接WiFi
+oled.framebuf.blit(获,20,24)
+oled.framebuf.blit(取,36,24)
+oled.framebuf.blit(时,52,24)
+oled.framebuf.blit(间,68,24)
+oled.framebuf.blit(中,84,24)
+oled.framebuf.blit(省略号,100,24)
+oled.framebuf.blit(省略号,104,24)
+oled.framebuf.blit(省略号,108,24)
+oled.show()
+if setup_wifi(WIFI_SSID, WIFI_PASSWORD):
+    # 获取NTP时间并设置为北京时间
+    get_ntp_time()
+    
+    # 显示本地时间（无论NTP是否成功）
+    t = time.localtime()
+    local_time = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(t[0], t[1], t[2], t[3], t[4], t[5])
+    print("设备本地时间:", local_time)
+
+else:
+    oled.show_fill(0)
+    oled.framebuf.blit(获,15,24)
+    oled.framebuf.blit(取,31,24)
+    oled.framebuf.blit(时,47,24)
+    oled.framebuf.blit(间,63,24)
+    oled.framebuf.blit(失,79,24)
+    oled.framebuf.blit(败,95,24)
+    oled.show()
+    print("无法连接到WiFi，跳过时间同步")
+    time.sleep(3)
+oled.show_fill(0)
+before_data = "0"
+before_time = "0"
+while 1:
+    t = time.localtime()
+    now_data = "{:04d}-{:02d}-{:02d}".format(t[0], t[1], t[2])
+    now_time = "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])
+    if not now_data == before_data:
+        oled.fill_rect(0,32,128,8,0)
+        oled.text(now_data,24,30)
+        oled.show()
+        before_data = now_data
+    if not now_time == before_time:
+        oled.fill_rect(0,40,128,8,0)
+        oled.text(now_time,32,40)
+        oled.fill_rect(0,0,128,16,0)
+        oled.framebuf.blit(温,0,0)
+        oled.framebuf.blit(度,16,0)
+        oled.text(str(dhtx.get_dht_temperature('dht11',2)),33,6)
+        oled.framebuf.blit(湿,70,0)
+        oled.framebuf.blit(度,86,0)
+        oled.text(str(dhtx.get_dht_relative_humidity('dht11',2)),103,6)
+        oled.show()
+        before_time = now_time
+    
+
